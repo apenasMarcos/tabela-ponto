@@ -26,18 +26,30 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 	        for (Horario intervaloMarcacao : horariosTrabalhados) {
 	        	
-	            if (intervaloMarcacao.getFim().isAfter(intervaloHorario.getInicio()) && intervaloHorario.getFim().isAfter(intervaloMarcacao.getInicio())) {
+ 	            if ((intervaloMarcacao.getFim().isAfter(intervaloHorario.getInicio()) ||
+ 	            		intervaloMarcacao.getFim().equals(intervaloHorario.getInicio())) &&
+ 	            		(intervaloHorario.getFim().isAfter(intervaloMarcacao.getInicio()) ||
+ 	            				intervaloHorario.getFim().equals(intervaloMarcacao.getInicio()))) {
 	            	
-	                if (intervaloHorario.getInicio().isBefore(intervaloMarcacao.getInicio())) {
+	            	if (intervaloHorario.getInicio().isBefore(intervaloMarcacao.getInicio())) {
 
 	                    atrasos.add(new Horario(intervaloHorario.getInicio(), intervaloMarcacao.getInicio()));
-	                }
+		                if (intervaloHorario.getFim().isAfter(intervaloMarcacao.getFim())) {
 
-	                if (intervaloHorario.getFim().isAfter(intervaloMarcacao.getFim())) {
+		                    atrasos.add(new Horario(intervaloMarcacao.getFim(), intervaloHorario.getFim()));
+		                }
+	                } else if (intervaloHorario.getFim().isAfter(intervaloMarcacao.getFim()) && 
+	                		intervaloHorario.getInicio().isBefore(intervaloMarcacao.getFim()) &&
+	                		!intervaloHorario.getInicio().equals(intervaloMarcacao.getFim())) {
 
-	                    atrasos.add(new Horario(intervaloMarcacao.getFim(), intervaloHorario.getFim()));
-	                }
-	                horarioTrabalhadoEncontrado = true;
+		                    atrasos.add(new Horario(intervaloMarcacao.getFim(), intervaloHorario.getFim()));
+		                }
+	            	horarioTrabalhadoEncontrado = true;
+	            } else if ((intervaloMarcacao.getInicio().isBefore(intervaloHorario.getInicio()) &&
+ 	            		intervaloMarcacao.getFim().equals(intervaloHorario.getFim())) &&
+ 	            		(intervaloHorario.getFim().isAfter(intervaloMarcacao.getInicio()) ||
+ 	            				intervaloHorario.getFim().equals(intervaloMarcacao.getInicio()))) {
+	            	horarioTrabalhadoEncontrado = true;
 	            }
 	        }
 
@@ -51,9 +63,9 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 		List<Horario> atrasosCorrigidos = new ArrayList<>(atrasos);
 		
 		int i = 0;
-        for (Horario intervaloMarcacao : atrasosIteradores) {
+        for (Horario atrasoIterado : atrasosIteradores) {
 	        for(Horario atraso : atrasos) {
-	        	if(atraso.getFim().isBefore(intervaloMarcacao.getFim()) && intervaloMarcacao.getInicio().isBefore(atraso.getFim())) {
+	        	if(atraso.getFim().isBefore(atrasoIterado.getFim()) && atrasoIterado.getInicio().isBefore(atraso.getFim())) {
 	        		try {
 	        			atrasosCorrigidos.remove(i);
 	        			atrasosCorrigidos.remove(i++);
@@ -61,9 +73,14 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 	        			
 	        		}
 	        		if(!atrasosIteradores.get(atrasosIteradores.size() - 1).getFim().isAfter(atraso.getFim())) {
-	        			atrasosCorrigidos.add(new Horario(intervaloMarcacao.getInicio(), atraso.getFim()));
+	        			atrasosCorrigidos.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
 	        		}
 	        		i--;
+	        	} 
+	        	if(atraso.getInicio().isBefore(atrasoIterado.getInicio()) && 
+	        			atraso.getFim().isBefore(atrasoIterado.getFim()) &&
+	        			atrasoIterado.getInicio().isBefore(atraso.getFim())) {
+	        		atrasosCorrigidos.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
 	        	}
 	        } i++;
         }
@@ -78,7 +95,7 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 	        for (Horario intervaloMarcacao : horariosTrabalhados) {
 	        	
-	            if (intervaloMarcacao.getInicio().isBefore(intervaloHorario.getFim()) && intervaloHorario.getInicio().isBefore(intervaloMarcacao.getFim())) {
+	            if ((intervaloMarcacao.getInicio().isBefore(intervaloHorario.getFim()) || intervaloMarcacao.getInicio().equals(intervaloHorario.getFim())) && (intervaloHorario.getInicio().isBefore(intervaloMarcacao.getFim()) || intervaloHorario.getInicio().equals(intervaloMarcacao.getFim()))) {
 
 	                if (intervaloHorario.getInicio().isAfter(intervaloMarcacao.getInicio())) {
 
@@ -90,6 +107,8 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 	                	horasExtras.add(new Horario(intervaloHorario.getFim(), intervaloMarcacao.getFim()));
 	                }
 	                horarioTrabalhadoEncontrado = true;
+	            } else if(intervaloMarcacao.getInicio().isBefore(intervaloHorario.getInicio()) && intervaloMarcacao.getFim().isBefore(intervaloHorario.getInicio())) {
+	            	horasExtras.add(new Horario(intervaloMarcacao.getInicio(), intervaloMarcacao.getFim()));
 	            }
 	        }
 
@@ -98,7 +117,27 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 	        }
 	        
 	    }
-	    
-        return horasExtras;
+	    return horasExtras;
+//	    List<Horario> extrasIteradores = new ArrayList<>(horasExtras);
+//		List<Horario> extrasCorrigidos = new ArrayList<>(horasExtras);
+//		
+//		int i = 0;
+//        for (Horario intervaloMarcacao : extrasIteradores) {
+//	        for(Horario atraso : horasExtras) {
+//	        	if(atraso.getFim().isBefore(intervaloMarcacao.getFim()) && intervaloMarcacao.getInicio().isBefore(atraso.getFim())) {
+//	        		try {
+//	        			extrasCorrigidos.remove(i);
+//	        			extrasCorrigidos.remove(i++);
+//	        		} catch (IndexOutOfBoundsException ignored) {
+//	        			
+//	        		}
+//	        		if(!extrasIteradores.get(extrasIteradores.size() - 1).getFim().isAfter(atraso.getFim())) {
+//	        			extrasCorrigidos.add(new Horario(intervaloMarcacao.getInicio(), atraso.getFim()));
+//	        		}
+//	        		i--;
+//	        	}
+//	        } i++;
+//        }
+//        return extrasCorrigidos;
     }
 }
