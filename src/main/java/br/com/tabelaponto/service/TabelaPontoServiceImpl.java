@@ -194,8 +194,8 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 							&& (horarioTrabalhado.getFim().isAfter(horario.getInicio())
 									|| horarioTrabalhado.getFim().equals(horario.getInicio()))) {
 
-						if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
-							horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+						if (horarioTrabalhado.getInicio().isBefore(horario.getInicio())) {
+							horasExtras.add(new Horario(horarioTrabalhado.getInicio(), horario.getInicio()));
 						}
 						if (horarioTrabalhado.getFim().isAfter(horario.getFim())) {
 							horasExtras.add(new Horario(horario.getFim(), horarioTrabalhado.getFim()));
@@ -214,9 +214,9 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				horasExtras.add(horarioTrabalhado);
 			}
 		}
+
+		List<Horario> extrasIterados = new ArrayList<>();
 		
-		
-		List<Horario> extrasIterados = new ArrayList<>(horasExtras);
 		for (Horario horario : horasExtras) {
             boolean isDuplicate = false;
             for (Horario uniqueHorario : extrasIterados) {
@@ -233,21 +233,65 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
             }
         }
 		
-		List<Horario> extrasCorrigidos = new ArrayList<>();
+		List<Horario> extrasNaoDuplicados = new ArrayList<>();
 		
 		for (Horario horario : horarios) {
 			for(Horario extra : extrasIterados) {
 				if (!(extra.getInicio().equals(horario.getInicio()) || extra.getInicio().isAfter(horario.getInicio())) ||
 				        !(extra.getFim().equals(horario.getFim()) || extra.getFim().isBefore(horario.getFim()))) {
-				    extrasCorrigidos.add(extra);
+					extrasNaoDuplicados.add(extra);
 				}
 			}
 		}
 		
-        Set<Horario> conjunto = new HashSet<>(extrasCorrigidos);
-        extrasCorrigidos.clear();
-        extrasCorrigidos.addAll(conjunto);
-        
+		Set<Horario> limpaDuplicadas = new HashSet<>(extrasNaoDuplicados);
+		extrasNaoDuplicados.clear();
+		extrasNaoDuplicados.addAll(limpaDuplicadas);
+		limpaDuplicadas.clear();
+
+		List<Horario> extrasCorrigidos = new ArrayList<>(extrasNaoDuplicados);
+		List<Horario> elementosARemover = new ArrayList<>();
+
+		for (Horario extra : extrasNaoDuplicados) {
+		    for (Horario extraCorrigido : extrasNaoDuplicados) {
+		        if (extra.getFim().isBefore(extraCorrigido.getFim())
+		                && extraCorrigido.getInicio().isBefore(extra.getFim())) {
+		            extrasCorrigidos.add(new Horario(extraCorrigido.getInicio(), extra.getFim()));
+		            elementosARemover.add(extra);
+		            elementosARemover.add(extraCorrigido);
+		        }
+		    }
+		}
+
+		extrasCorrigidos.removeAll(elementosARemover);
+		elementosARemover.clear();
+		
+		for (Horario extra : extrasNaoDuplicados) {
+		    for (Horario extraCorrigido : extrasNaoDuplicados) {
+		        if (extra.getInicio().isBefore(extraCorrigido.getInicio()) && extra.getFim().equals(extraCorrigido.getFim())) {
+		            for (Horario horario : horarios) {
+		                if (extra.getInicio().equals(horario.getFim())) {
+		                    int index = horarios.indexOf(horario);
+		                    if (index < horarios.size() - 1) {
+		                        Horario proximoHorario = horarios.get(index + 1);
+		                        extrasCorrigidos.add(new Horario(horario.getFim(), proximoHorario.getInicio()));
+		                        elementosARemover.add(extra);
+		                    }
+		                }
+		            }
+		        }
+		    }
+		}
+
+		if(!elementosARemover.isEmpty()) {
+			extrasCorrigidos.removeAll(elementosARemover);
+
+			limpaDuplicadas.addAll(extrasCorrigidos);
+			
+			extrasCorrigidos.clear();
+			extrasCorrigidos.addAll(limpaDuplicadas);
+		}
+		
 		Collections.sort(extrasCorrigidos, Comparator.comparing(Horario::getInicio));
 
 		return extrasCorrigidos;
