@@ -3,7 +3,11 @@ package br.com.tabelaponto.service;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import br.com.tabelaponto.model.Horario;
 import br.com.tabelaponto.model.Periodo;
@@ -50,12 +54,13 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 						}
 
-					} else {
-						if (horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
+					} else if (horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
 							atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+						} else if (horario.getInicio().equals(horarioTrabalhado.getInicio())
+								&& horario.getFim().equals(horarioTrabalhado.getFim())) {
+							horarioTrabalhadoEncontrado = true;
 						}
 
-					}
 
 				} else if (isAfterMeioDia(horarioTrabalhado)) {
 
@@ -92,9 +97,6 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 						}
 						horarioTrabalhadoEncontrado = true;
 
-					} else if (horario.getInicio().equals(horarioTrabalhado.getInicio())
-							&& horario.getFim().equals(horarioTrabalhado.getFim())) {
-						horarioTrabalhadoEncontrado = true;
 					}
 				}
 
@@ -104,29 +106,36 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				atrasos.add(horario);
 			}
 		}
-
-		List<Horario> atrasosIteradores = new ArrayList<>(atrasos);
-		List<Horario> atrasosCorrigidos = new ArrayList<>(atrasos);
-
-		int i = 0;
-		for (Horario atrasoIterado : atrasosIteradores) {
+		Set<Horario> atrasosIterados = new HashSet<>(atrasos);
+		for (Horario atrasoIterado : atrasos) {
 			for (Horario atraso : atrasos) {
 				if (atraso.getFim().isBefore(atrasoIterado.getFim())
 						&& atrasoIterado.getInicio().isBefore(atraso.getFim())) {
-					try {
-						atrasosCorrigidos.remove(i);
-						atrasosCorrigidos.remove(i);
-					} catch (IndexOutOfBoundsException ignored) {
-
-					}
-					if (!atrasosIteradores.get(atrasosIteradores.size() - 1).getFim().isAfter(atraso.getFim())) {
-						atrasosCorrigidos.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
-					}
-					i--;
+					atrasosIterados.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
 				}
 			}
-			i++;
 		}
+		
+		
+		List<Horario> atrasosCorrigidos = new ArrayList<>();
+		for (Horario horario : atrasosIterados) {
+            boolean isDuplicate = false;
+            for (Horario uniqueHorario : atrasosCorrigidos) {
+                if (horario.getInicio().equals(uniqueHorario.getInicio())) {
+                	if (horario.getFim().isBefore(uniqueHorario.getFim())) {
+                		uniqueHorario.setFim(horario.getFim());
+            		}
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (!isDuplicate) {
+            	atrasosCorrigidos.add(horario);
+            }
+        }
+		
+		Collections.sort(atrasosCorrigidos, Comparator.comparing(Horario::getInicio));
+		
 		return atrasosCorrigidos;
 	}
 
@@ -205,7 +214,43 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				horasExtras.add(horarioTrabalhado);
 			}
 		}
-		return horasExtras;
+		
+		
+		List<Horario> extrasIterados = new ArrayList<>(horasExtras);
+		for (Horario horario : horasExtras) {
+            boolean isDuplicate = false;
+            for (Horario uniqueHorario : extrasIterados) {
+                if (horario.getInicio().equals(uniqueHorario.getInicio())) {
+                	if (horario.getFim().isBefore(uniqueHorario.getFim())) {
+                		uniqueHorario.setFim(horario.getFim());
+            		}
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (!isDuplicate) {
+            	extrasIterados.add(horario);
+            }
+        }
+		
+		List<Horario> extrasCorrigidos = new ArrayList<>();
+		
+		for (Horario horario : horarios) {
+			for(Horario extra : extrasIterados) {
+				if (!(extra.getInicio().equals(horario.getInicio()) || extra.getInicio().isAfter(horario.getInicio())) ||
+				        !(extra.getFim().equals(horario.getFim()) || extra.getFim().isBefore(horario.getFim()))) {
+				    extrasCorrigidos.add(extra);
+				}
+			}
+		}
+		
+        Set<Horario> conjunto = new HashSet<>(extrasCorrigidos);
+        extrasCorrigidos.clear();
+        extrasCorrigidos.addAll(conjunto);
+        
+		Collections.sort(extrasCorrigidos, Comparator.comparing(Horario::getInicio));
+
+		return extrasCorrigidos;
 
 	}
 

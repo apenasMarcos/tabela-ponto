@@ -45,6 +45,28 @@ public class Horario {
 	}
     
     
+	public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Horario horario = (Horario) obj;
+        return inicio.equals(horario.inicio) && fim.equals(horario.fim);
+    }
 
+    @Override
+    public int hashCode() {
+        return inicio.hashCode() + fim.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Horario{" +
+                "inicio=" + inicio +
+                ", fim=" + fim +
+                '}';
+    }
 }
 
