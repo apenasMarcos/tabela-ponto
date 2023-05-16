@@ -24,7 +24,8 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 		return periodo;
 	}
 
-	private List<Horario> calcularAtrasos(List<Horario> horarios, List<Horario> horariosTrabalhados) {
+	@Override
+	public List<Horario> calcularAtrasos(List<Horario> horarios, List<Horario> horariosTrabalhados) {
 		List<Horario> atrasos = new ArrayList<>();
 
 		for (Horario horario : horarios) {
@@ -136,7 +137,8 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 		return atrasosCorrigidos;
 	}
 
-	private List<Horario> calcularExtras(List<Horario> horarios, List<Horario> horariosTrabalhados) {
+	@Override
+	public List<Horario> calcularExtras(List<Horario> horarios, List<Horario> horariosTrabalhados) {
 		List<Horario> horasExtras = new ArrayList<>();
 
 		for (Horario horarioTrabalhado : horariosTrabalhados) {
@@ -152,7 +154,7 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 										|| horarioTrabalhado.getInicio().equals(horario.getFim()))) {
 
 							if (horarioTrabalhado.getInicio().isBefore(horario.getInicio())) {
-								horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+								horasExtras.add(new Horario(horarioTrabalhado.getInicio(), horario.getInicio()));
 							}
 							if (horarioTrabalhado.getFim().isAfter(horario.getFim())) {
 								horasExtras.add(new Horario(horario.getFim(), horarioTrabalhado.getFim()));
@@ -164,10 +166,11 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 					} else {
 						if (horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
 							horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
-						} horarioEncontrado = true;
-							if(horarioTrabalhado.getFim().isBefore(horario.getInicio()) || 
-									horarioTrabalhado.getFim().equals(horario.getInicio())) {
-								horarioEncontrado = false;
+						}
+						horarioEncontrado = true;
+						if (horarioTrabalhado.getFim().isBefore(horario.getInicio())
+								|| horarioTrabalhado.getFim().equals(horario.getInicio())) {
+							horarioEncontrado = false;
 						}
 					}
 
@@ -240,8 +243,7 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				if (isAfterMeioDia(extra)) {
 					if (!(extra.getInicio().equals(horario.getInicio())
 							|| extra.getInicio().isBefore(horario.getInicio()))
-							|| !(extra.getFim().equals(horario.getFim()) ||
-									extra.getFim().isAfter(horario.getFim()))) {
+							|| !(extra.getFim().equals(horario.getFim()) || extra.getFim().isAfter(horario.getFim()))) {
 						extrasNaoDuplicados.add(extra);
 					}
 				} else if (!(extra.getInicio().equals(horario.getInicio())
