@@ -54,34 +54,29 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 						}
 
-					} else if (horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
+					} else {
+						if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
 							atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
-						} else if (horario.getInicio().equals(horarioTrabalhado.getInicio())
-								&& horario.getFim().equals(horarioTrabalhado.getFim())) {
-							horarioTrabalhadoEncontrado = true;
-						}
 
+						}
+						if (horarioTrabalhado.getFim().isBefore(horario.getFim())) {
+							atrasos.add(new Horario(horarioTrabalhado.getFim(), horario.getFim()));
+						}
+						horarioTrabalhadoEncontrado = true;
+					}
 
 				} else if (isAfterMeioDia(horarioTrabalhado)) {
 
-					if (horarioTrabalhado.getInicio().isAfter(horario.getFim())) {
-						if(horarioTrabalhado.getFim().equals(horario.getInicio())) {
+					if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())
+							|| horarioTrabalhado.getInicio().equals(horario.getInicio())) {
+						if (horario.getInicio().isAfter(horarioTrabalhado.getInicio())) {
 							atrasos.add(new Horario(horarioTrabalhado.getInicio(), horario.getInicio()));
 						}
-						atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getFim()));
-						horarioTrabalhadoEncontrado = true;
-					}
-					if (horarioTrabalhado.getFim().isAfter(horario.getInicio())) {
-						if (horarioTrabalhado.getInicio().equals(horario.getFim())) {
-							atrasos.add(new Horario(horarioTrabalhado.getFim(), horario.getFim()));
+						if (horario.getFim().isBefore(horarioTrabalhado.getFim())) {
+							atrasos.add(new Horario(horario.getFim(), horarioTrabalhado.getFim()));
 						}
-						atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getFim()));
 						horarioTrabalhadoEncontrado = true;
 					}
-					if(horarioTrabalhado.getFim().equals(horario.getInicio()) && horarioTrabalhado.getInicio().equals(horario.getFim())) {
-						horarioTrabalhadoEncontrado = false;
-					}
-					
 
 				} else {
 					if ((horarioTrabalhado.getFim().isAfter(horario.getInicio())
@@ -99,7 +94,10 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 					}
 				}
-
+				if (horarioTrabalhado.getInicio().equals(horario.getInicio())
+						&& horarioTrabalhado.getFim().equals(horario.getFim())) {
+					horarioTrabalhadoEncontrado = true;
+				}
 			}
 
 			if (!horarioTrabalhadoEncontrado) {
@@ -115,27 +113,26 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				}
 			}
 		}
-		
-		
+
 		List<Horario> atrasosCorrigidos = new ArrayList<>();
 		for (Horario horario : atrasosIterados) {
-            boolean isDuplicate = false;
-            for (Horario uniqueHorario : atrasosCorrigidos) {
-                if (horario.getInicio().equals(uniqueHorario.getInicio())) {
-                	if (horario.getFim().isBefore(uniqueHorario.getFim())) {
-                		uniqueHorario.setFim(horario.getFim());
-            		}
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            if (!isDuplicate) {
-            	atrasosCorrigidos.add(horario);
-            }
-        }
-		
+			boolean isDuplicate = false;
+			for (Horario uniqueHorario : atrasosCorrigidos) {
+				if (horario.getInicio().equals(uniqueHorario.getInicio())) {
+					if (horario.getFim().isBefore(uniqueHorario.getFim())) {
+						uniqueHorario.setFim(horario.getFim());
+					}
+					isDuplicate = true;
+					break;
+				}
+			}
+			if (!isDuplicate) {
+				atrasosCorrigidos.add(horario);
+			}
+		}
+
 		Collections.sort(atrasosCorrigidos, Comparator.comparing(Horario::getInicio));
-		
+
 		return atrasosCorrigidos;
 	}
 
@@ -154,7 +151,7 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 								&& (horarioTrabalhado.getInicio().isAfter(horario.getFim())
 										|| horarioTrabalhado.getInicio().equals(horario.getFim()))) {
 
-							if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
+							if (horarioTrabalhado.getInicio().isBefore(horario.getInicio())) {
 								horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
 							}
 							if (horarioTrabalhado.getFim().isAfter(horario.getFim())) {
@@ -164,28 +161,31 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 
 						}
 
-					} else if (horarioTrabalhado.getFim().isBefore(horario.getFim())) {
-
-						horasExtras.add(new Horario(horario.getFim(), horarioTrabalhado.getFim()));
-						horarioEncontrado = true;
-					} else if (horarioTrabalhado.getInicio().isAfter(horario.getFim())) {
-						if (horarioTrabalhado.getFim().isAfter(horario.getInicio())) {
-							horasExtras.add(new Horario(horarioTrabalhado.getInicio(), horario.getInicio()));
-							horarioEncontrado = true;
+					} else {
+						if (horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
+							horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+						} horarioEncontrado = true;
+							if(horarioTrabalhado.getFim().isBefore(horario.getInicio()) || 
+									horarioTrabalhado.getFim().equals(horario.getInicio())) {
+								horarioEncontrado = false;
 						}
 					}
 
 				} else if (isAfterMeioDia(horarioTrabalhado)) {
 
-					if (horario.getFim().isBefore(horarioTrabalhado.getInicio())) {
-						horasExtras.add(new Horario(horarioTrabalhado.getInicio(), horario.getFim()));
+					if ((horario.getInicio().isAfter(horarioTrabalhado.getInicio())
+							|| horario.getInicio().equals(horarioTrabalhado.getInicio()))
+							&& (horarioTrabalhado.getInicio().isAfter(horario.getInicio())
+									|| horarioTrabalhado.getInicio().equals(horario.getInicio()))) {
+
+						if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
+							horasExtras.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+						}
+						if (horarioTrabalhado.getFim().isBefore(horario.getFim())) {
+							horasExtras.add(new Horario(horarioTrabalhado.getFim(), horario.getFim()));
+						}
 						horarioEncontrado = true;
 					}
-					if (horario.getInicio().isBefore(horarioTrabalhado.getFim())) {
-						horasExtras.add(new Horario(horarioTrabalhado.getInicio(), horario.getInicio()));
-						horarioEncontrado = true;
-					}
-					
 
 				} else {
 
@@ -216,34 +216,42 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 		}
 
 		List<Horario> extrasIterados = new ArrayList<>();
-		
+
 		for (Horario horario : horasExtras) {
-            boolean isDuplicate = false;
-            for (Horario uniqueHorario : extrasIterados) {
-                if (horario.getInicio().equals(uniqueHorario.getInicio())) {
-                	if (horario.getFim().isBefore(uniqueHorario.getFim())) {
-                		uniqueHorario.setFim(horario.getFim());
-            		}
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            if (!isDuplicate) {
-            	extrasIterados.add(horario);
-            }
-        }
-		
+			boolean isDuplicate = false;
+			for (Horario uniqueHorario : extrasIterados) {
+				if (horario.getInicio().equals(uniqueHorario.getInicio())) {
+					if (horario.getFim().isBefore(uniqueHorario.getFim())) {
+						uniqueHorario.setFim(horario.getFim());
+					}
+					isDuplicate = true;
+					break;
+				}
+			}
+			if (!isDuplicate) {
+				extrasIterados.add(horario);
+			}
+		}
+
 		List<Horario> extrasNaoDuplicados = new ArrayList<>();
-		
+
 		for (Horario horario : horarios) {
-			for(Horario extra : extrasIterados) {
-				if (!(extra.getInicio().equals(horario.getInicio()) || extra.getInicio().isAfter(horario.getInicio())) ||
-				        !(extra.getFim().equals(horario.getFim()) || extra.getFim().isBefore(horario.getFim()))) {
+			for (Horario extra : extrasIterados) {
+				if (isAfterMeioDia(extra)) {
+					if (!(extra.getInicio().equals(horario.getInicio())
+							|| extra.getInicio().isBefore(horario.getInicio()))
+							|| !(extra.getFim().equals(horario.getFim()) ||
+									extra.getFim().isAfter(horario.getFim()))) {
+						extrasNaoDuplicados.add(extra);
+					}
+				} else if (!(extra.getInicio().equals(horario.getInicio())
+						|| extra.getInicio().isAfter(horario.getInicio()))
+						|| !(extra.getFim().equals(horario.getFim()) || extra.getFim().isBefore(horario.getFim()))) {
 					extrasNaoDuplicados.add(extra);
 				}
 			}
 		}
-		
+
 		Set<Horario> limpaDuplicadas = new HashSet<>(extrasNaoDuplicados);
 		extrasNaoDuplicados.clear();
 		extrasNaoDuplicados.addAll(limpaDuplicadas);
@@ -253,45 +261,46 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 		List<Horario> elementosARemover = new ArrayList<>();
 
 		for (Horario extra : extrasNaoDuplicados) {
-		    for (Horario extraCorrigido : extrasNaoDuplicados) {
-		        if (extra.getFim().isBefore(extraCorrigido.getFim())
-		                && extraCorrigido.getInicio().isBefore(extra.getFim())) {
-		            extrasCorrigidos.add(new Horario(extraCorrigido.getInicio(), extra.getFim()));
-		            elementosARemover.add(extra);
-		            elementosARemover.add(extraCorrigido);
-		        }
-		    }
+			for (Horario extraCorrigido : extrasNaoDuplicados) {
+				if (extra.getFim().isBefore(extraCorrigido.getFim())
+						&& extraCorrigido.getInicio().isBefore(extra.getFim())) {
+					extrasCorrigidos.add(new Horario(extraCorrigido.getInicio(), extra.getFim()));
+					elementosARemover.add(extra);
+					elementosARemover.add(extraCorrigido);
+				}
+			}
 		}
 
 		extrasCorrigidos.removeAll(elementosARemover);
 		elementosARemover.clear();
-		
+
 		for (Horario extra : extrasNaoDuplicados) {
-		    for (Horario extraCorrigido : extrasNaoDuplicados) {
-		        if (extra.getInicio().isBefore(extraCorrigido.getInicio()) && extra.getFim().equals(extraCorrigido.getFim())) {
-		            for (Horario horario : horarios) {
-		                if (extra.getInicio().equals(horario.getFim())) {
-		                    int index = horarios.indexOf(horario);
-		                    if (index < horarios.size() - 1) {
-		                        Horario proximoHorario = horarios.get(index + 1);
-		                        extrasCorrigidos.add(new Horario(horario.getFim(), proximoHorario.getInicio()));
-		                        elementosARemover.add(extra);
-		                    }
-		                }
-		            }
-		        }
-		    }
+			for (Horario extraCorrigido : extrasNaoDuplicados) {
+				if (extra.getInicio().isBefore(extraCorrigido.getInicio())
+						&& extra.getFim().equals(extraCorrigido.getFim())) {
+					for (Horario horario : horarios) {
+						if (extra.getInicio().equals(horario.getFim())) {
+							int index = horarios.indexOf(horario);
+							if (index < horarios.size() - 1) {
+								Horario proximoHorario = horarios.get(index + 1);
+								extrasCorrigidos.add(new Horario(horario.getFim(), proximoHorario.getInicio()));
+								elementosARemover.add(extra);
+							}
+						}
+					}
+				}
+			}
 		}
 
-		if(!elementosARemover.isEmpty()) {
+		if (!elementosARemover.isEmpty()) {
 			extrasCorrigidos.removeAll(elementosARemover);
 
 			limpaDuplicadas.addAll(extrasCorrigidos);
-			
+
 			extrasCorrigidos.clear();
 			extrasCorrigidos.addAll(limpaDuplicadas);
 		}
-		
+
 		Collections.sort(extrasCorrigidos, Comparator.comparing(Horario::getInicio));
 
 		return extrasCorrigidos;
