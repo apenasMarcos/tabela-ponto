@@ -56,14 +56,18 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 						}
 
 					} else {
-						if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
+						if(horarioTrabalhado.getInicio().isBefore(horario.getFim())) {
 							atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
-
-						}
+							horarioTrabalhadoEncontrado = true;
+						} else if (horarioTrabalhado.getInicio().isAfter(horario.getInicio())) {
+								atrasos.add(new Horario(horario.getInicio(), horarioTrabalhado.getInicio()));
+								horarioTrabalhadoEncontrado = true;
+							}
 						if (horarioTrabalhado.getFim().isBefore(horario.getFim())) {
 							atrasos.add(new Horario(horarioTrabalhado.getFim(), horario.getFim()));
+							horarioTrabalhadoEncontrado = true;
 						}
-						horarioTrabalhadoEncontrado = true;
+						
 					}
 
 				} else if (isAfterMeioDia(horarioTrabalhado)) {
@@ -105,20 +109,36 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				atrasos.add(horario);
 			}
 		}
-		Set<Horario> atrasosIterados = new HashSet<>(atrasos);
+		
+		Set<Horario> atrasosNaoDuplicados = new HashSet<>(atrasos);
+		List<Horario> elementosARemover = new ArrayList<>();
+		
 		for (Horario atrasoIterado : atrasos) {
 			for (Horario atraso : atrasos) {
-				if (atraso.getFim().isBefore(atrasoIterado.getFim())
+				if(isAfterMeioDia(atrasoIterado)) {
+					if(!isAfterMeioDia(atraso)) {
+						if (atrasoIterado.getFim().isAfter(atraso.getInicio())
+								&& atraso.getInicio().isBefore(atrasoIterado.getFim())) {
+							atrasosNaoDuplicados.add(new Horario(atraso.getInicio(), atrasoIterado.getFim()));
+							elementosARemover.add(atrasoIterado);
+							elementosARemover.add(atraso);
+						}
+					}
+				} else if (!isAfterMeioDia(atraso) && atraso.getFim().isBefore(atrasoIterado.getFim())
 						&& atrasoIterado.getInicio().isBefore(atraso.getFim())) {
-					atrasosIterados.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
+					atrasosNaoDuplicados.add(new Horario(atrasoIterado.getInicio(), atraso.getFim()));
+					elementosARemover.add(atrasoIterado);
+					elementosARemover.add(atraso);
 				}
 			}
 		}
+		
+		atrasosNaoDuplicados.removeAll(elementosARemover);
 
-		List<Horario> atrasosCorrigidos = new ArrayList<>();
-		for (Horario horario : atrasosIterados) {
+		List<Horario> atrasosIteradosFim = new ArrayList<>();
+		for (Horario horario : atrasosNaoDuplicados) {
 			boolean isDuplicate = false;
-			for (Horario uniqueHorario : atrasosCorrigidos) {
+			for (Horario uniqueHorario : atrasosIteradosFim) {
 				if (horario.getInicio().equals(uniqueHorario.getInicio())) {
 					if (horario.getFim().isBefore(uniqueHorario.getFim())) {
 						uniqueHorario.setFim(horario.getFim());
@@ -128,13 +148,31 @@ public class TabelaPontoServiceImpl implements TabelaPontoService {
 				}
 			}
 			if (!isDuplicate) {
-				atrasosCorrigidos.add(horario);
+				atrasosIteradosFim.add(horario);
 			}
 		}
+		
+		List<Horario> atrasosIteradosInicio = new ArrayList<>();
 
-		Collections.sort(atrasosCorrigidos, Comparator.comparing(Horario::getInicio));
+		for (Horario horario : atrasosIteradosFim) {
+			boolean isDuplicate = false;
+			for (Horario uniqueHorario : atrasosIteradosInicio) {
+				if (horario.getFim().equals(uniqueHorario.getFim())) {
+					if (horario.getInicio().isAfter(uniqueHorario.getInicio())) {
+						uniqueHorario.setInicio(horario.getInicio());
+					}
+					isDuplicate = true;
+					break;
+				}
+			}
+			if (!isDuplicate) {
+				atrasosIteradosInicio.add(horario);
+			}
+		}
+	
+		Collections.sort(atrasosIteradosInicio, Comparator.comparing(Horario::getInicio));
 
-		return atrasosCorrigidos;
+		return atrasosIteradosInicio;
 	}
 
 	@Override
